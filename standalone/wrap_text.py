@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from typing import Generator
+import re
 
 
 def _blocks(lines: list[str]) -> Generator[list[str], None, None]:
@@ -23,8 +24,22 @@ def _ignore_block(block: list[str]) -> bool:
     return False
 
 
+DO_NOT_SPLIT = [('‹', '›'), ('«', '»')]
+
+
 def _lines(string: str, width: int) -> Generator[str, None, None]:
-    words = string.split()
+    def replace(match: re.Match) -> str:
+        return match.group(0).replace(' ', '\x00')
+
+    for start, end in DO_NOT_SPLIT:
+        string = re.sub(f'{start}[^{end}]*{end}', replace, string)
+
+    words = string.split(' ')
+
+    # change back to spaces
+    for i, word in enumerate(words):
+        words[i] = word.replace('\x00', ' ')
+
     buffer = ''
     for word in words:
         if len(word) + len(buffer) + 2 >= width:
