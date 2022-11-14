@@ -17,8 +17,11 @@ def _blocks(lines: list[str]) -> Generator[list[str], None, None]:
         yield buffer
 
 
+IGNORE_INDENT = ['\t', ' ' * 4]
+
+
 def _ignore_block(block: list[str]) -> bool:
-    if block and block[0].startswith('\t'):
+    if block and any(block[0].startswith(x) for x in IGNORE_INDENT):
         return True
 
     return False
