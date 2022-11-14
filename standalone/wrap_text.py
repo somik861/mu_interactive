@@ -58,7 +58,7 @@ def _lines(string: str, width: int) -> Generator[str, None, None]:
 def _wrap_block(block: list[str], width: int) -> list[str]:
     flat = ''.join(block).replace('\n', ' ')
     while '  ' in flat:
-        flat.replace('  ', ' ')
+        flat = flat.replace('  ', ' ')
 
     return [line for line in _lines(flat, width)]
 
