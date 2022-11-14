@@ -18,7 +18,7 @@ def _blocks(lines: list[str]) -> Generator[list[str], None, None]:
 
 
 def _ignore_block(block: list[str]) -> bool:
-    if block and block[0][0] == '\t':
+    if block and block[0].startswith('\t'):
         return True
 
     return False
