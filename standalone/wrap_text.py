@@ -77,11 +77,14 @@ def wrap_text(input_lines: list[str], width: int) -> list[str]:
 if __name__ == '__main__':
     parser = ArgumentParser('py wrap_text.py')
 
-    parser.add_argument('infile', metavar='IN_FILE', type=str)
-    parser.add_argument('-o', required=False, metavar='OUT_FILE', type=str)
-    parser.add_argument('-i', required=False, action='store_true')
+    parser.add_argument('infile', metavar='IN_FILE',
+                        type=str, help='Input file to wrap')
+    parser.add_argument('-o', required=False,
+                        metavar='OUT_FILE', type=str, help='Output file')
+    parser.add_argument('-i', required=False,
+                        action='store_true', help='Make changes in-place')
     parser.add_argument('-w', required=False,
-                        metavar='WRAP', type=int, default=80)
+                        metavar='WRAP_SIZE', type=int, default=80, help='Set max line-size (default: 80)')
 
     args = parser.parse_args()
 
