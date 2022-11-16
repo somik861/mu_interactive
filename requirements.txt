@@ -1,2 +1,4 @@
 django
 django-stubs
+requests
+types-requests
