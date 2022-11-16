@@ -85,10 +85,18 @@ if __name__ == '__main__':
                         action='store_true', help='Make changes in-place')
     parser.add_argument('-w', required=False,
                         metavar='WRAP_SIZE', type=int, default=80, help='Set max line-size (default: 80)')
+    parser.add_argument('--replace_tabs', required=False, type=int,
+                        metavar='SPACES', help='Replace tabs with given number of spaces')
 
     args = parser.parse_args()
 
-    new_lines = wrap_text(open(args.infile).readlines(), args.w)
+    old_lines = open(args.infile).readlines()
+
+    if args.replace_tabs is not None:
+        for i, line in enumerate(old_lines):
+            old_lines[i] = line.replace('\t', ' ' * args.replace_tabs)
+
+    new_lines = wrap_text(old_lines, args.w)
 
     if args.o is None and not args.i:
         for line in new_lines:
