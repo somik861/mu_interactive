@@ -7,8 +7,8 @@ from typing import Any
 import requests
 import json
 
-_BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/MU_binaries/mu_linux64_gcc8.tar.gz',
-                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/MU_binaries/mu_win64_cygwin.zip'}
+_BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.1-pre/mu_linux64_gcc8.tar.gz',
+                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.1-pre/mu_win64_cygwin.zip'}
 BINARY_URL = _BINARY_URLS[platform.system()]
 
 FILES_FOLDER_NAME = os.path.join('mu_html_files', platform.system())
@@ -67,6 +67,10 @@ def _clean_download() -> None:
     filepath = os.path.join(
         FILES_FOLDER_PATH, utils.get_url_filename(BINARY_URL))
     data = requests.get(BINARY_URL).content
+
+    assert data != b'Not Found', 'Cannot download requested file, ' + \
+        'please check your connection or report issue at https://github.com/somik861/mu_interactive'
+
     open(filepath, mode='wb').write(data)
 
     print('Unpacking data...')
@@ -79,8 +83,8 @@ def _clean_download() -> None:
     print('Cleaning temporary files...')
     Path(filepath).unlink()
 
-    assert _validate_files(), 'Files werent correctly downloaded,'
-    'please report this at https://github.com/somik861/mu_interactive'
+    assert _validate_files(), 'Files werent correctly downloaded,' + \
+        'please report this at https://github.com/somik861/mu_interactive'
 
 
 def init_if_needed() -> None:
