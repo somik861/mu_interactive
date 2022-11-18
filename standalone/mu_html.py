@@ -6,6 +6,7 @@ from shutil import rmtree, unpack_archive
 from typing import Any
 import requests
 import json
+import subprocess
 
 _BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/linux64_gcc8.tar.gz',
                 'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/mu_win64_cygwin.zip'}
@@ -98,11 +99,32 @@ def init_if_needed() -> None:
         _clean_download()
 
 
+def get_html(source: str) -> str:
+    result = subprocess.run([MU_BINARY_PATH, '--html', '--embed', HTML_PATH],
+                            input=source.encode(encoding='utf-8'), capture_output=True)
+
+    tex_cache = Path(os.path.join(FILES_FOLDER_PATH, 'texmf_cache'))
+    tex_cache.mkdir(parents=True, exist_ok=True)
+
+    os.putenv('TEXINPUTS', str(TEX_PATH))
+    os.putenv('OSFONTDIR', str(FONTS_PATH))
+    os.putenv('TEXMFCACHE', str(tex_cache))
+
+    result = subprocess.run([SVGTEX_BINARY_PATH],
+                            input=result.stdout, capture_output=True)
+
+    return result.stdout.decode(encoding='utf-8')
+
+
 def main(inp: str, out: str) -> None:
     if not out.endswith('.html'):
         out += '.html'
 
     init_if_needed()
+
+    source = open(inp, 'r', encoding='utf-8').read()
+    html = get_html(source)
+    open(out, 'w', encoding='utf-8').write(html)
 
 
 if __name__ == '__main__':
