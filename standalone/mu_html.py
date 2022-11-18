@@ -7,8 +7,8 @@ from typing import Any
 import requests
 import json
 
-_BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.1-pre/mu_linux64_gcc8.tar.gz',
-                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.1-pre/mu_win64_cygwin.zip'}
+_BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/linux64_gcc8.tar.gz',
+                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/mu_win64_cygwin.zip'}
 BINARY_URL = _BINARY_URLS[platform.system()]
 
 FILES_FOLDER_NAME = os.path.join('mu_html_files', platform.system())
@@ -25,6 +25,9 @@ FILES_FOLDER_PATH = Path(os.path.join(SCRIPT_FOLDER, FILES_FOLDER_NAME))
 MU_BINARY_PATH = Path(os.path.join(FILES_FOLDER_PATH, MU_BINARY_NAME))
 SVGTEX_BINARY_PATH = Path(os.path.join(FILES_FOLDER_PATH, SVGTEX_BINARY_NAME))
 CONFIG_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'config.json'))
+HTML_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'html'))
+TEX_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'tex'))
+FONTS_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'fonts'))
 
 
 class utils:
@@ -47,6 +50,9 @@ def _validate_files() -> bool:
         assert MU_BINARY_PATH.exists()
         assert SVGTEX_BINARY_PATH.exists()
         assert CONFIG_PATH.exists()
+        assert HTML_PATH.exists()
+        assert TEX_PATH.exists()
+        assert FONTS_PATH.exists()
 
         cfg = utils.load_config()
         assert 'version' in cfg
