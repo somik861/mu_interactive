@@ -110,8 +110,9 @@ def get_html(source: str) -> str:
     os.putenv('OSFONTDIR', str(FONTS_PATH))
     os.putenv('TEXMFCACHE', str(tex_cache))
 
-    result = subprocess.run([SVGTEX_BINARY_PATH],
-                            input=result.stdout, capture_output=True)
+    # SVGTEX does not work on windows
+    # result = subprocess.run([SVGTEX_BINARY_PATH],
+    #                       input=result.stdout, capture_output=True)
 
     return result.stdout.decode(encoding='utf-8')
 
