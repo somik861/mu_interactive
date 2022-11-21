@@ -7,6 +7,12 @@ from typing import Any
 import requests
 import json
 import subprocess
+import re
+
+HEADER = {'title': 'Generic title',
+          'authors': 'Generic author',
+          'doctype': 'lnotes',
+          'typing': 'plain'}
 
 _BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/linux64_gcc8.tar.gz',
                 'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/mu_win64_cygwin.zip'}
@@ -99,6 +105,30 @@ def init_if_needed() -> None:
         _clean_download()
 
 
+def _complete_header(source: str) -> str:
+    splitted = source.splitlines()
+    found: set[str] = set()
+
+    for line in splitted:
+        if line.strip() == '':
+            break
+
+        if re.match(r'\s*:.*:', line) is None:
+            break
+
+        found.add(line.split(':')[1])
+
+    to_prepend = ''
+
+    for key, value in HEADER.items():
+        if key in found:
+            continue
+
+        to_prepend += f': {key} : {value}\n'
+
+    return to_prepend + source
+
+
 def get_html(source: str) -> str:
     result = subprocess.run([MU_BINARY_PATH, '--html', '--embed', HTML_PATH],
                             input=source.encode(encoding='utf-8'), capture_output=True)
@@ -117,13 +147,16 @@ def get_html(source: str) -> str:
     return result.stdout.decode(encoding='utf-8')
 
 
-def main(inp: str, out: str) -> None:
+def main(inp: str, out: str, complete_header: bool = True) -> None:
     if not out.endswith('.html'):
         out += '.html'
 
     init_if_needed()
 
     source = open(inp, 'r', encoding='utf-8').read()
+
+    if complete_header:
+        source = _complete_header(source)
     html = get_html(source)
     open(out, 'w', encoding='utf-8').write(html)
 
@@ -133,7 +166,9 @@ if __name__ == '__main__':
 
     parser.add_argument('i', metavar='IN_FILE', type=str, help='Input file')
     parser.add_argument('o', metavar='OUT_FILE', type=str, help='Output file')
+    parser.add_argument('--no_header', required=False,
+                        action='store_true', help='Disable automatic header completion')
 
     args = parser.parse_args()
 
-    main(args.i, args.o)
+    main(args.i, args.o, not args.no_header)
