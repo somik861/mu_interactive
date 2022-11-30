@@ -109,7 +109,7 @@ def _clean_download() -> None:
     print('Cleaning temporary files...')
     Path(filepath).unlink()
 
-    assert _validate_files(), 'Files werent correctly downloaded,' + \
+    assert _validate_files(), 'Files werent correctly downloaded, ' + \
         'please report this at https://github.com/somik861/mu_interactive'
 
 
