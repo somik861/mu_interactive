@@ -15,16 +15,16 @@ HEADER = {'title': 'Generic title',
           'typing': 'plain'}
 
 _BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/linux64_gcc8.tar.gz',
-                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/mu_win64_cygwin.zip'}
+                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/win64_cygwin.zip'}
 BINARY_URL = _BINARY_URLS[platform.system()]
 
 FILES_FOLDER_NAME = os.path.join('mu_html_files', platform.system())
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
 
-_MU_BINARY_NAMES = {'Linux': 'mu', 'Windows': 'mu.exe'}
+_MU_BINARY_NAMES = {'Linux': 'mu', 'Windows': os.path.join('cygwin64', 'bin', 'mu.exe')}
 MU_BINARY_NAME = _MU_BINARY_NAMES[platform.system()]
 
-_SVGTEX_BINARY_NAMES = {'Linux': 'svgtex', 'Windows': 'svgtex.exe'}
+_SVGTEX_BINARY_NAMES = {'Linux': 'svgtex', 'Windows': os.path.join('cygwin64', 'bin', 'svgtex.exe')}
 SVGTEX_BINARY_NAME = _SVGTEX_BINARY_NAMES[platform.system()]
 
 
