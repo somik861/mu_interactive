@@ -21,10 +21,12 @@ BINARY_URL = _BINARY_URLS[platform.system()]
 FILES_FOLDER_NAME = os.path.join('mu_html_files', platform.system())
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
 
-_MU_BINARY_NAMES = {'Linux': 'mu', 'Windows': os.path.join('cygwin64', 'bin', 'mu.exe')}
+_MU_BINARY_NAMES = {'Linux': 'mu',
+                    'Windows': os.path.join('cygwin64', 'bin', 'mu.exe')}
 MU_BINARY_NAME = _MU_BINARY_NAMES[platform.system()]
 
-_SVGTEX_BINARY_NAMES = {'Linux': 'svgtex', 'Windows': os.path.join('cygwin64', 'bin', 'svgtex.exe')}
+_SVGTEX_BINARY_NAMES = {'Linux': 'svgtex',
+                        'Windows': os.path.join('cygwin64', 'bin', 'svgtex.exe')}
 SVGTEX_BINARY_NAME = _SVGTEX_BINARY_NAMES[platform.system()]
 
 
@@ -32,9 +34,20 @@ FILES_FOLDER_PATH = Path(os.path.join(SCRIPT_FOLDER, FILES_FOLDER_NAME))
 MU_BINARY_PATH = Path(os.path.join(FILES_FOLDER_PATH, MU_BINARY_NAME))
 SVGTEX_BINARY_PATH = Path(os.path.join(FILES_FOLDER_PATH, SVGTEX_BINARY_NAME))
 CONFIG_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'config.json'))
-HTML_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'html'))
-TEX_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'tex'))
-FONTS_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'fonts'))
+
+_HTML_PATHS = {'Linux': 'html',
+               'Windows': os.path.join('cygwin64', 'bin', 'html')}
+HTML_PATH = Path(os.path.join(FILES_FOLDER_PATH,
+                 _HTML_PATHS[platform.system()]))
+
+_TEX_PATHS = {'Linux': 'tex', 'Windows': os.path.join(
+    'cygwin64', 'bin', 'tex')}
+TEX_PATH = Path(os.path.join(FILES_FOLDER_PATH, _TEX_PATHS[platform.system()]))
+
+_FONTS_PATHS = {'Linux': 'fonts',
+                'Windows': os.path.join('cygwin64', 'bin', 'fonts')}
+FONTS_PATH = Path(os.path.join(FILES_FOLDER_PATH,
+                  _FONTS_PATHS[platform.system()]))
 
 
 class utils:
@@ -141,7 +154,7 @@ def get_html(source: str) -> str:
     os.putenv('TEXMFCACHE', str(tex_cache))
 
     result = subprocess.run([SVGTEX_BINARY_PATH],
-                          input=result.stdout, capture_output=True)
+                            input=result.stdout, capture_output=True)
 
     return result.stdout.decode(encoding='utf-8')
 
