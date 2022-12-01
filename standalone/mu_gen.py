@@ -8,7 +8,7 @@ import requests
 import json
 import subprocess
 import re
-from enum import Enum, auto
+from enum import Enum
 
 
 class OutType(Enum):
@@ -21,9 +21,13 @@ HEADER = {'title': 'Generic title',
           'doctype': 'lnotes',
           'typing': 'plain'}
 
-_BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/linux64_gcc8.tar.gz',
-                'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/win64_cygwin.zip'}
-BINARY_URL = _BINARY_URLS[platform.system()]
+_MU_BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/linux64_gcc8.tar.gz',
+                   'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/win64_cygwin.zip'}
+MU_BINARY_URL = _MU_BINARY_URLS[platform.system()]
+
+_CONTEXT_BINRAY_URLS = {'Linux': 'http://lmtx.pragma-ade.nl/install-lmtx/context-linux-64.zip',
+                        'Windows': 'http://lmtx.pragma-ade.nl/install-lmtx/context-win64.zip'}
+CONTEXT_BINARY_URL = _CONTEXT_BINRAY_URLS[platform.system()]
 
 FILES_FOLDER_NAME = os.path.join('mu_gen_files', platform.system())
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
@@ -36,14 +40,32 @@ _SVGTEX_BINARY_NAMES = {'Linux': 'svgtex',
                         'Windows': os.path.join('cygwin64', 'bin', 'svgtex.exe')}
 SVGTEX_BINARY_NAME = _SVGTEX_BINARY_NAMES[platform.system()]
 
+_CONTEXT_BINARY_NAMES = {'Linux': os.path.join('tex', 'texmf-linux-64', 'bin', 'context'),
+                         'Windows': ''}
+CONTEXT_BINARY_NAME = _CONTEXT_BINARY_NAMES[platform.system()]
+
+_MTXRUN_BINARY_NAMES = {'Linux': os.path.join('tex', 'texmf-linux-64', 'bin', 'mtxrun'),
+                        'Windows': ''}
+MTXRUN_BINARY_NAME = _MTXRUN_BINARY_NAMES[platform.system()]
+
 
 FILES_FOLDER_PATH = Path(os.path.join(SCRIPT_FOLDER, FILES_FOLDER_NAME))
-MU_BINARY_PATH = Path(os.path.join(FILES_FOLDER_PATH, MU_BINARY_NAME))
-SVGTEX_BINARY_PATH = Path(os.path.join(FILES_FOLDER_PATH, SVGTEX_BINARY_NAME))
+MU_FILES_FOLDER_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'mu'))
+CONTEXT_FILES_FOLDER_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'context'))
+
+MU_BINARY_PATH = Path(os.path.join(MU_FILES_FOLDER_PATH, MU_BINARY_NAME))
+SVGTEX_BINARY_PATH = Path(os.path.join(
+    MU_FILES_FOLDER_PATH, SVGTEX_BINARY_NAME))
 CONFIG_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'config.json'))
-HTML_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'html'))
-TEX_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'tex'))
-FONTS_PATH = Path(os.path.join(FILES_FOLDER_PATH, 'fonts'))
+HTML_PATH = Path(os.path.join(MU_FILES_FOLDER_PATH, 'html'))
+TEX_PATH = Path(os.path.join(MU_FILES_FOLDER_PATH, 'tex'))
+FONTS_PATH = Path(os.path.join(MU_FILES_FOLDER_PATH, 'fonts'))
+
+
+CONTEXT_BINARY_PATH = Path(os.path.join(
+    CONTEXT_FILES_FOLDER_PATH, CONTEXT_BINARY_NAME))
+MTXRUN_BINARY_PATH = Path(os.path.join(
+    CONTEXT_FILES_FOLDER_PATH, MTXRUN_BINARY_NAME))
 
 
 class utils:
@@ -59,24 +81,85 @@ class utils:
     def save_config(cfg: dict[str, Any]) -> None:
         json.dump(cfg, open(CONFIG_PATH, 'w'), indent=4)
 
+    @staticmethod
+    def download_file(url: str, path: str) -> None:
+        data = requests.get(url).content
+
+        assert data != b'Not Found', 'Cannot download requested file, ' + \
+            'please check your connection or report issue at https://github.com/somik861/mu_interactive'
+
+        open(path, mode='wb').write(data)
+
 
 def _validate_files() -> bool:
     try:
         assert FILES_FOLDER_PATH.exists()
+        assert MU_FILES_FOLDER_PATH.exists()
+        assert CONTEXT_FILES_FOLDER_PATH.exists()
         assert MU_BINARY_PATH.exists()
         assert SVGTEX_BINARY_PATH.exists()
         assert CONFIG_PATH.exists()
         assert HTML_PATH.exists()
         assert TEX_PATH.exists()
         assert FONTS_PATH.exists()
+        assert CONTEXT_BINARY_PATH.exists()
+        assert MTXRUN_BINARY_PATH.exists()
 
         cfg = utils.load_config()
-        assert 'version' in cfg
-        assert cfg['version'] == BINARY_URL or cfg['version'] == 'custom'
+        assert 'mu_version' in cfg
+        assert cfg['mu_version'] == MU_BINARY_URL or cfg['mu_version'] == 'custom'
     except AssertionError:
         return False
 
     return True
+
+
+def _download_mu() -> None:
+    print('Downloading mu binaries...')
+    filepath = os.path.join(
+        FILES_FOLDER_PATH, utils.get_url_filename(MU_BINARY_URL))
+    MU_FILES_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
+    utils.download_file(MU_BINARY_URL, filepath)
+
+    print('Unpacking data...')
+    unpack_archive(filepath, extract_dir=MU_FILES_FOLDER_PATH)
+
+    cfg: dict[str, Any] = utils.load_config()
+    cfg['mu_version'] = MU_BINARY_URL
+    utils.save_config(cfg)
+
+    print('Cleaning temporary files...')
+    Path(filepath).unlink()
+
+
+def _download_context() -> None:
+    print('Downloading context binaries...')
+    filepath = os.path.join(
+        FILES_FOLDER_PATH, utils.get_url_filename(CONTEXT_BINARY_URL))
+
+    CONTEXT_FILES_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
+    utils.download_file(CONTEXT_BINARY_URL, filepath)
+
+    print('Unpacking data...')
+    unpack_archive(filepath, extract_dir=CONTEXT_FILES_FOLDER_PATH)
+
+    print('Boostraping...')
+
+    if platform.system() == 'Linux':
+        install_file = os.path.join(CONTEXT_FILES_FOLDER_PATH, 'install.sh')
+        subprocess.run(['chmod', 'u+x', install_file], capture_output=True)
+        subprocess.run(['sh', install_file],
+                       cwd=CONTEXT_FILES_FOLDER_PATH, capture_output=True)
+
+    if platform.system() == 'Windows':
+        pass
+
+    cfg: dict[str, Any] = utils.load_config()
+    cfg['context_version'] = CONTEXT_BINARY_URL
+    utils.save_config(cfg)
+
+    print('Cleaning temporary files...')
+    Path(filepath).unlink()
 
 
 def _clean_download() -> None:
@@ -84,26 +167,10 @@ def _clean_download() -> None:
     rmtree(FILES_FOLDER_PATH, ignore_errors=True)
 
     FILES_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
+    utils.save_config({})
 
-    print('Downloading binaries...')
-    filepath = os.path.join(
-        FILES_FOLDER_PATH, utils.get_url_filename(BINARY_URL))
-    data = requests.get(BINARY_URL).content
-
-    assert data != b'Not Found', 'Cannot download requested file, ' + \
-        'please check your connection or report issue at https://github.com/somik861/mu_interactive'
-
-    open(filepath, mode='wb').write(data)
-
-    print('Unpacking data...')
-    unpack_archive(filepath, extract_dir=FILES_FOLDER_PATH)
-
-    cfg: dict[str, Any] = {}
-    cfg['version'] = BINARY_URL
-    utils.save_config(cfg)
-
-    print('Cleaning temporary files...')
-    Path(filepath).unlink()
+    _download_mu()
+    _download_context()
 
     assert _validate_files(), 'Files werent correctly downloaded, ' + \
         'please report this at https://github.com/somik861/mu_interactive'
@@ -167,19 +234,19 @@ def get_pdf(source: str) -> bytes:
     os.putenv('OSFONTDIR', str(FONTS_PATH))
     os.putenv('TEXMFCACHE', str(tex_cache))
 
-    subprocess.run(['mtxrun', '--generate'], capture_output=True)
-    subprocess.run(['context', '--make'], capture_output=True)
+    subprocess.run([MTXRUN_BINARY_PATH, '--generate'], capture_output=True)
+    subprocess.run([CONTEXT_BINARY_PATH, '--make'], capture_output=True)
 
     txt_file = os.path.join(build_path, 'source.txt')
     open(txt_file, 'w', encoding='utf-8').write(source)
 
     result = subprocess.run([MU_BINARY_PATH, txt_file], capture_output=True)
 
-
     tex_file = os.path.join(build_path, 'source.tex')
     open(tex_file, 'w', encoding='utf-8').write(result.stdout.decode(encoding='utf-8'))
 
-    subprocess.run(['context', tex_file], cwd=build_path, capture_output=True)
+    subprocess.run([CONTEXT_BINARY_PATH, tex_file],
+                   cwd=build_path, capture_output=True)
     data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
 
     rmtree(build_path, ignore_errors=True)
