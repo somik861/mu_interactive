@@ -158,10 +158,33 @@ def get_html(source: str) -> bytes:
 
 def get_pdf(source: str) -> bytes:
 
-    temp = Path(os.path.join(FILES_FOLDER_PATH, 'build_f'))
-    temp.mkdir(parents=True, exist_ok=True)
+    build_path = Path(os.path.join(FILES_FOLDER_PATH, 'build_f'))
+    build_path.mkdir(parents=True, exist_ok=True)
+    tex_cache = Path(os.path.join(FILES_FOLDER_PATH, 'texmf_cache'))
+    tex_cache.mkdir(parents=True, exist_ok=True)
 
-    return b''
+    os.putenv('TEXINPUTS', str(TEX_PATH))
+    os.putenv('OSFONTDIR', str(FONTS_PATH))
+    os.putenv('TEXMFCACHE', str(tex_cache))
+
+    subprocess.run(['mtxrun', '--generate'], capture_output=True)
+    subprocess.run(['context', '--make'], capture_output=True)
+
+    txt_file = os.path.join(build_path, 'source.txt')
+    open(txt_file, 'w', encoding='utf-8').write(source)
+
+    result = subprocess.run([MU_BINARY_PATH, txt_file], capture_output=True)
+
+
+    tex_file = os.path.join(build_path, 'source.tex')
+    open(tex_file, 'w', encoding='utf-8').write(result.stdout.decode(encoding='utf-8'))
+
+    subprocess.run(['context', tex_file], cwd=build_path, capture_output=True)
+    data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
+
+    rmtree(build_path, ignore_errors=True)
+    rmtree(tex_cache, ignore_errors=True)
+    return data
 
 
 def main(type_: OutType, inp: str, out: str, complete_header: bool = True) -> None:
