@@ -25,7 +25,7 @@ _BINARY_URLS = {'Linux': 'https://github.com/somik861/mu_cmake/releases/download
                 'Windows': 'https://github.com/somik861/mu_cmake/releases/download/v0.0.2-pre/win64_cygwin.zip'}
 BINARY_URL = _BINARY_URLS[platform.system()]
 
-FILES_FOLDER_NAME = os.path.join('mu_html_files', platform.system())
+FILES_FOLDER_NAME = os.path.join('mu_gen_files', platform.system())
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
 
 _MU_BINARY_NAMES = {'Linux': 'mu',
@@ -152,10 +152,15 @@ def get_html(source: str) -> bytes:
     result = subprocess.run([SVGTEX_BINARY_PATH],
                             input=result.stdout, capture_output=True)
 
+    rmtree(tex_cache, ignore_errors=True)
     return result.stdout
 
 
 def get_pdf(source: str) -> bytes:
+
+    temp = Path(os.path.join(FILES_FOLDER_PATH, 'build_f'))
+    temp.mkdir(parents=True, exist_ok=True)
+
     return b''
 
 
@@ -176,7 +181,8 @@ def main(type_: OutType, inp: str, out: str, complete_header: bool = True) -> No
         open(out, 'w', encoding='utf-8').write(html.decode(encoding='utf-8'))
 
     if type_ is OutType.pdf:
-        pass
+        pdf = get_pdf(source)
+        open(out, 'wb').write(pdf)
 
 
 if __name__ == '__main__':
