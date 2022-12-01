@@ -8,6 +8,13 @@ import requests
 import json
 import subprocess
 import re
+from enum import Enum, auto
+
+
+class OutType(Enum):
+    html = 'html'
+    pdf = 'pdf'
+
 
 HEADER = {'title': 'Generic title',
           'authors': 'Generic author',
@@ -21,10 +28,12 @@ BINARY_URL = _BINARY_URLS[platform.system()]
 FILES_FOLDER_NAME = os.path.join('mu_html_files', platform.system())
 SCRIPT_FOLDER = os.path.dirname(os.path.realpath(__file__))
 
-_MU_BINARY_NAMES = {'Linux': 'mu', 'Windows': os.path.join('cygwin64', 'bin', 'mu.exe')}
+_MU_BINARY_NAMES = {'Linux': 'mu',
+                    'Windows': os.path.join('cygwin64', 'bin', 'mu.exe')}
 MU_BINARY_NAME = _MU_BINARY_NAMES[platform.system()]
 
-_SVGTEX_BINARY_NAMES = {'Linux': 'svgtex', 'Windows': os.path.join('cygwin64', 'bin', 'svgtex.exe')}
+_SVGTEX_BINARY_NAMES = {'Linux': 'svgtex',
+                        'Windows': os.path.join('cygwin64', 'bin', 'svgtex.exe')}
 SVGTEX_BINARY_NAME = _SVGTEX_BINARY_NAMES[platform.system()]
 
 
@@ -129,7 +138,7 @@ def _complete_header(source: str) -> str:
     return to_prepend + source
 
 
-def get_html(source: str) -> str:
+def get_html(source: str) -> bytes:
     result = subprocess.run([MU_BINARY_PATH, '--html', '--embed', HTML_PATH],
                             input=source.encode(encoding='utf-8'), capture_output=True)
 
@@ -141,14 +150,19 @@ def get_html(source: str) -> str:
     os.putenv('TEXMFCACHE', str(tex_cache))
 
     result = subprocess.run([SVGTEX_BINARY_PATH],
-                          input=result.stdout, capture_output=True)
+                            input=result.stdout, capture_output=True)
 
-    return result.stdout.decode(encoding='utf-8')
+    return result.stdout
 
 
-def main(inp: str, out: str, complete_header: bool = True) -> None:
-    if not out.endswith('.html'):
-        out += '.html'
+def get_pdf(source: str) -> bytes:
+    return b''
+
+
+def main(type_: OutType, inp: str, out: str, complete_header: bool = True) -> None:
+    extension = '.' + type_.value
+    if not out.endswith(extension):
+        out += extension
 
     init_if_needed()
 
@@ -156,13 +170,20 @@ def main(inp: str, out: str, complete_header: bool = True) -> None:
 
     if complete_header:
         source = _complete_header(source)
-    html = get_html(source)
-    open(out, 'w', encoding='utf-8').write(html)
+
+    if type_ is OutType.html:
+        html = get_html(source)
+        open(out, 'w', encoding='utf-8').write(html.decode(encoding='utf-8'))
+
+    if type_ is OutType.pdf:
+        pass
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
 
+    parser.add_argument('type', metavar='TYPE', type=str,
+                        choices=['html', 'pdf'])
     parser.add_argument('i', metavar='IN_FILE', type=str, help='Input file')
     parser.add_argument('o', metavar='OUT_FILE', type=str, help='Output file')
     parser.add_argument('--no_header', required=False,
@@ -170,4 +191,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.i, args.o, not args.no_header)
+    main(OutType(args.type), args.i, args.o, not args.no_header)
