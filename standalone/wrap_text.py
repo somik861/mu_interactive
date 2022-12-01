@@ -103,7 +103,7 @@ if __name__ == '__main__':
             print(line, end='')
 
     if args.i:
-        open(args.infile, 'w').writelines(new_lines)
+        open(args.infile, 'w', newline='\n').writelines(new_lines)
 
     if args.o is not None:
-        open(args.o, 'w').writelines(new_lines)
+        open(args.o, 'w', newline='\n').writelines(new_lines)
