@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    old_lines = open(args.infile).readlines()
+    old_lines = open(args.infile, encoding='utf-8').readlines()
 
     if args.replace_tabs is not None:
         for i, line in enumerate(old_lines):
@@ -103,7 +103,7 @@ if __name__ == '__main__':
             print(line, end='')
 
     if args.i:
-        open(args.infile, 'w', newline='\n').writelines(new_lines)
+        open(args.infile, 'w', newline='\n', encoding='utf-8').writelines(new_lines)
 
     if args.o is not None:
-        open(args.o, 'w', newline='\n').writelines(new_lines)
+        open(args.o, 'w', newline='\n', encoding='utf-8').writelines(new_lines)

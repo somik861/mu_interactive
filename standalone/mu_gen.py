@@ -252,8 +252,9 @@ def get_pdf(source: str) -> bytes:
     tex_file = os.path.join(build_path, 'source.tex')
     open(tex_file, 'w', encoding='utf-8', newline='\n').write(result.stdout.decode(encoding='utf-8'))
 
-    subprocess.run([CONTEXT_BINARY_PATH, tex_file],
+    x = subprocess.run([CONTEXT_BINARY_PATH, tex_file],
                    cwd=build_path, capture_output=True)
+    
     data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
 
     rmtree(build_path, ignore_errors=True)
