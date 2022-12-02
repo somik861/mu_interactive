@@ -41,11 +41,11 @@ _SVGTEX_BINARY_NAMES = {'Linux': 'svgtex',
 SVGTEX_BINARY_NAME = _SVGTEX_BINARY_NAMES[platform.system()]
 
 _CONTEXT_BINARY_NAMES = {'Linux': os.path.join('tex', 'texmf-linux-64', 'bin', 'context'),
-                         'Windows': ''}
+                         'Windows': os.path.join('tex', 'texmf-win64', 'bin', 'context.exe')}
 CONTEXT_BINARY_NAME = _CONTEXT_BINARY_NAMES[platform.system()]
 
 _MTXRUN_BINARY_NAMES = {'Linux': os.path.join('tex', 'texmf-linux-64', 'bin', 'mtxrun'),
-                        'Windows': ''}
+                        'Windows': os.path.join('tex', 'texmf-win64', 'bin', 'mtxrun.exe')}
 MTXRUN_BINARY_NAME = _MTXRUN_BINARY_NAMES[platform.system()]
 
 
@@ -152,7 +152,7 @@ def _download_context() -> None:
                        cwd=CONTEXT_FILES_FOLDER_PATH, capture_output=True)
 
     if platform.system() == 'Windows':
-        pass
+        subprocess.run([os.path.join(CONTEXT_FILES_FOLDER_PATH, 'install.bat')], capture_output=True)
 
     cfg: dict[str, Any] = utils.load_config()
     cfg['context_version'] = CONTEXT_BINARY_URL
@@ -202,6 +202,9 @@ def _complete_header(source: str) -> str:
 
         to_prepend += f': {key} : {value}\n'
 
+    if not found:
+        to_prepend += '\n'
+
     return to_prepend + source
 
 
@@ -234,16 +237,20 @@ def get_pdf(source: str) -> bytes:
     os.putenv('OSFONTDIR', str(FONTS_PATH))
     os.putenv('TEXMFCACHE', str(tex_cache))
 
+    if platform.system() == 'Windows':
+        os.putenv('PLATFORM', 'win64')
+        os.putenv('OWNPATH', str(CONTEXT_FILES_FOLDER_PATH))
+
     subprocess.run([MTXRUN_BINARY_PATH, '--generate'], capture_output=True)
     subprocess.run([CONTEXT_BINARY_PATH, '--make'], capture_output=True)
 
     txt_file = os.path.join(build_path, 'source.txt')
-    open(txt_file, 'w', encoding='utf-8').write(source)
+    open(txt_file, 'w', encoding='utf-8', newline='\n').write(source)
 
     result = subprocess.run([MU_BINARY_PATH, txt_file], capture_output=True)
 
     tex_file = os.path.join(build_path, 'source.tex')
-    open(tex_file, 'w', encoding='utf-8').write(result.stdout.decode(encoding='utf-8'))
+    open(tex_file, 'w', encoding='utf-8', newline='\n').write(result.stdout.decode(encoding='utf-8'))
 
     subprocess.run([CONTEXT_BINARY_PATH, tex_file],
                    cwd=build_path, capture_output=True)
@@ -265,6 +272,9 @@ def main(type_: OutType, inp: str, out: str, complete_header: bool = True) -> No
 
     if complete_header:
         source = _complete_header(source)
+
+    if not source.endswith('\n'):
+        source += '\n'
 
     if type_ is OutType.html:
         html = get_html(source)
