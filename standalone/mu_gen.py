@@ -2,13 +2,16 @@ from argparse import ArgumentParser
 import os
 import platform
 from pathlib import Path
-from shutil import rmtree, unpack_archive
+from shutil import rmtree, unpack_archive, copytree
 from typing import Any
 import requests
 import json
 import subprocess
 import re
 from enum import Enum
+
+# set via main
+_ARG_DEBUG = False
 
 
 class OutType(Enum):
@@ -152,7 +155,8 @@ def _download_context() -> None:
                        cwd=CONTEXT_FILES_FOLDER_PATH, capture_output=True)
 
     if platform.system() == 'Windows':
-        subprocess.run([os.path.join(CONTEXT_FILES_FOLDER_PATH, 'install.bat')], capture_output=True)
+        subprocess.run([os.path.join(CONTEXT_FILES_FOLDER_PATH,
+                       'install.bat')], capture_output=True)
 
     cfg: dict[str, Any] = utils.load_config()
     cfg['context_version'] = CONTEXT_BINARY_URL
@@ -250,19 +254,25 @@ def get_pdf(source: str) -> bytes:
     result = subprocess.run([MU_BINARY_PATH, txt_file], capture_output=True)
 
     tex_file = os.path.join(build_path, 'source.tex')
-    open(tex_file, 'w', encoding='utf-8', newline='\n').write(result.stdout.decode(encoding='utf-8'))
+    open(tex_file, 'w', encoding='utf-8',
+         newline='\n').write(result.stdout.decode(encoding='utf-8'))
 
     x = subprocess.run([CONTEXT_BINARY_PATH, tex_file],
-                   cwd=build_path, capture_output=True)
-    
+                       cwd=build_path, capture_output=True)
+
     data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
+
+    if not _ARG_DEBUG:
+        copytree(build_path, '.mu_gen_logs', dirs_exist_ok=True)
 
     rmtree(build_path, ignore_errors=True)
     rmtree(tex_cache, ignore_errors=True)
     return data
 
 
-def main(type_: OutType, inp: str, out: str, complete_header: bool = True) -> None:
+def main(type_: OutType,
+         inp: str, out: str,
+         complete_header: bool = True) -> None:
     extension = '.' + type_.value
     if not out.endswith(extension):
         out += extension
@@ -295,7 +305,11 @@ if __name__ == '__main__':
     parser.add_argument('o', metavar='OUT_FILE', type=str, help='Output file')
     parser.add_argument('--no_header', required=False,
                         action='store_true', help='Disable automatic header completion')
+    parser.add_argument('--debug', action='store_true',
+                        required=False, help='Save logs of outputs to current working directory')
 
     args = parser.parse_args()
+
+    _ARG_DEBUG = args.debug
 
     main(OutType(args.type), args.i, args.o, not args.no_header)
