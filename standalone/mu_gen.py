@@ -262,8 +262,8 @@ def get_pdf(source: str) -> bytes:
 
     data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
 
-    if not _ARG_DEBUG:
-        copytree(build_path, '.mu_gen_logs', dirs_exist_ok=True)
+    if _ARG_DEBUG:
+        copytree(build_path, 'mu_gen_logs', dirs_exist_ok=True)
 
     rmtree(build_path, ignore_errors=True)
     rmtree(tex_cache, ignore_errors=True)
