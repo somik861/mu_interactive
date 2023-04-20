@@ -232,10 +232,7 @@ def get_html(source: str) -> bytes:
 
     subprocess.run([MTXRUN_BINARY_PATH, '--generate'], capture_output=True)
     # add context to path
-    if platform.system() == 'Windows':
-        pass
-    else:
-        os.environ['PATH'] = f'{str(CONTEXT_BINARY_PATH.parent)}:' + os.environ['PATH'] 
+    os.environ['PATH'] = f'{str(CONTEXT_BINARY_PATH.parent)}:' + os.environ['PATH'] 
 
     result = subprocess.run([SVGTEX_BINARY_PATH],
                             input=result.stdout, capture_output=True)
