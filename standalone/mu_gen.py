@@ -9,6 +9,7 @@ import json
 import subprocess
 import re
 from enum import Enum
+import sys
 
 # set via main
 _ARG_DEBUG = False
@@ -212,9 +213,15 @@ def _complete_header(source: str) -> str:
     return to_prepend + source
 
 
+def _print_if_err(stderr: bytes) -> None:
+    if stderr:
+        print(stderr.decode(encoding='utf-8'), file=sys.stderr)
+
+
 def get_html(source: str) -> bytes:
     result = subprocess.run([MU_BINARY_PATH, '--html', '--embed', HTML_PATH],
                             input=source.encode(encoding='utf-8'), capture_output=True)
+    _print_if_err(result.stderr)
 
     tex_cache = Path(os.path.join(FILES_FOLDER_PATH, 'texmf_cache'))
     tex_cache.mkdir(parents=True, exist_ok=True)
@@ -225,6 +232,7 @@ def get_html(source: str) -> bytes:
 
     result = subprocess.run([SVGTEX_BINARY_PATH],
                             input=result.stdout, capture_output=True)
+    _print_if_err(result.stderr)
 
     rmtree(tex_cache, ignore_errors=True)
     return result.stdout
@@ -252,13 +260,14 @@ def get_pdf(source: str) -> bytes:
     open(txt_file, 'w', encoding='utf-8', newline='\n').write(source)
 
     result = subprocess.run([MU_BINARY_PATH, txt_file], capture_output=True)
+    _print_if_err(result.stderr)
 
     tex_file = os.path.join(build_path, 'source.tex')
     open(tex_file, 'w', encoding='utf-8',
          newline='\n').write(result.stdout.decode(encoding='utf-8'))
 
-    x = subprocess.run([CONTEXT_BINARY_PATH, tex_file],
-                       cwd=build_path, capture_output=True)
+    subprocess.run([CONTEXT_BINARY_PATH, tex_file],
+                   cwd=build_path, capture_output=True)
 
     data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
 
