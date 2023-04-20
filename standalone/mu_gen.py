@@ -220,6 +220,9 @@ def _print_if_err(stderr: bytes) -> None:
 
 
 def get_html(source: str) -> bytes:
+    # add context to path
+    os.environ['PATH'] = f'{str(CONTEXT_BINARY_PATH.parent)}:' + os.environ['PATH'] 
+
     result = subprocess.run([MU_BINARY_PATH, '--html', '--embed', HTML_PATH],
                             input=source.encode(encoding='utf-8'), capture_output=True)
     _print_if_err(result.stderr)
@@ -232,8 +235,6 @@ def get_html(source: str) -> bytes:
     os.putenv('TEXMFCACHE', str(tex_cache))
 
     subprocess.run([MTXRUN_BINARY_PATH, '--generate'], capture_output=True)
-    # add context to path
-    os.environ['PATH'] = f'{str(CONTEXT_BINARY_PATH.parent)}:' + os.environ['PATH'] 
 
     result = subprocess.run([SVGTEX_BINARY_PATH],
                             input=result.stdout, capture_output=True)
@@ -249,6 +250,9 @@ def get_pdf(source: str) -> bytes:
     build_path.mkdir(parents=True, exist_ok=True)
     tex_cache = Path(os.path.join(FILES_FOLDER_PATH, 'texmf_cache'))
     tex_cache.mkdir(parents=True, exist_ok=True)
+
+    # add context to path
+    os.environ['PATH'] = f'{str(CONTEXT_BINARY_PATH.parent)}:' + os.environ['PATH']
 
     os.putenv('TEXINPUTS', str(TEX_PATH))
     os.putenv('OSFONTDIR', str(FONTS_PATH))
@@ -271,8 +275,9 @@ def get_pdf(source: str) -> bytes:
     open(tex_file, 'w', encoding='utf-8',
          newline='\n').write(result.stdout.decode(encoding='utf-8'))
 
-    subprocess.run([CONTEXT_BINARY_PATH, tex_file],
+    result = subprocess.run([CONTEXT_BINARY_PATH, tex_file],
                    cwd=build_path, capture_output=True)
+    _print_if_err(result.stderr)
 
     data = open(os.path.join(build_path, 'source.pdf'), 'rb').read()
 
