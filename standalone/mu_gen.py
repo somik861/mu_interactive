@@ -215,6 +215,7 @@ def _complete_header(source: str) -> str:
 
 def _print_if_err(stderr: bytes) -> None:
     if stderr:
+        print('ERROR:', file=sys.stderr)
         print(stderr.decode(encoding='utf-8'), file=sys.stderr)
 
 
