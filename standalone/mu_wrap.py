@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Generator
 import re
 
-IGNORE_INDENT = ['\t', ' ' * 4]
+IGNORE_INDENT = ['\t', ' ' * 4, '•']
 PREVENT_SPLIT = [('‹', '›'), ('«', '»')]
 
 _ARG_INPUT: Path = Path()
@@ -23,6 +23,7 @@ def _blocks(lines: list[str]) -> Generator[list[str], None, None]:
                 yield buffer
             yield [line]
             buffer = []
+            continue
 
         buffer.append(line)
 
@@ -38,6 +39,9 @@ def _lines(flat_block: str) -> Generator[str, None, None]:
         flat_block = re.sub(f'{start}[^{end}]*{end}', replace, flat_block)
 
     words = flat_block.split(' ')
+    # replace \x00 back to spaces
+    for i, word in enumerate(words):
+        words[i] = word.replace('\x00', ' ')
 
     buffer = ''
     for word in words:
